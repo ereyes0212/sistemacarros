@@ -42,7 +42,7 @@ export default function Home() {
             <a href="#arquitectura">Arquitectura</a>
             <a href="#moderacion">Moderación</a>
           </div>
-          <Button>Publicar vehículo</Button>
+          <Button asChild><a href="/login">Iniciar sesión</a></Button>
         </nav>
 
         <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
