@@ -2,7 +2,6 @@ import { getSession } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldCheck, Gauge, Headphones } from "lucide-react";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import Login from "../components/formLogin";
@@ -28,8 +27,10 @@ const highlights = [
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { callbackUrl?: string };
+  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
+  const googleError = resolvedSearchParams.error === "google_auth_failed";
   const session = await getSession();
   if (session) redirect("/mi-perfil");
 
@@ -40,15 +41,10 @@ export default async function LoginPage({
       <div className="pointer-events-none absolute -right-20 bottom-16 -z-10 h-72 w-72 rounded-full bg-violet-200/40 blur-3xl" />
 
       <div className="mx-auto grid min-h-screen max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-10">
-        <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_80px_-35px_rgba(15,23,42,0.45)] dark:border-slate-800 dark:bg-slate-900">
-          <Image
-            src="/images/login.png"
-            alt="Escena editorial con periódico y café"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-900/60 to-slate-800/30" />
+        <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-[0_20px_80px_-35px_rgba(15,23,42,0.45)] dark:border-slate-800">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.55),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(99,102,241,0.45),transparent_24%),linear-gradient(135deg,#020617_0%,#0f172a_48%,#155e75_100%)]" />
+          <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl" />
+          <div className="absolute left-12 top-24 h-28 w-64 rotate-[-12deg] rounded-full border border-white/15 bg-white/10 backdrop-blur-sm" />
 
           <div className="relative flex h-full flex-col justify-between p-8 text-white lg:p-10">
             <div className="space-y-4">
@@ -90,9 +86,14 @@ export default async function LoginPage({
               </div>
             </CardHeader>
 
-            <CardContent className="pt-2">
+            <CardContent className="space-y-4 pt-2">
+              {googleError ? (
+                <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+                  No pudimos iniciar sesión con Google. Verifica que el correo esté registrado en el sistema.
+                </p>
+              ) : null}
               <Suspense fallback={<div className="text-sm text-slate-500 dark:text-slate-400">Cargando...</div>}>
-                <Login callbackUrl={searchParams.callbackUrl} />
+                <Login callbackUrl={resolvedSearchParams.callbackUrl} />
               </Suspense>
             </CardContent>
           </Card>

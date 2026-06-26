@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import { Eye, EyeOff, LockKeyhole, Mail, ArrowRight, UserPlus, KeyRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ export default function Login({ callbackUrl }: { callbackUrl?: string }) {
   const [openRegister, setOpenRegister] = useState(false);
   const [isSubmittingRegister, setIsSubmittingRegister] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loginState, loginAction] = useFormState(
+  const [loginState, loginAction] = useActionState(
     loginWithCredentialsAction,
     initialLoginState
   );
