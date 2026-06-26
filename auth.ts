@@ -1,22 +1,27 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
-import { TSchemaResetPassword, schemaResetPassword } from "./app/(public)/reset-password/schema";
-import { schemaSignIn, TSchemaSignIn } from './lib/shemas';
-import { prisma } from './lib/prisma';
-import { Prisma } from "./lib/generated/prisma";
+import { redirect } from "next/navigation";
 
-// ------------------------------
-// CONFIGURACIÓN DE JWT
-// ------------------------------
-const key = new TextEncoder().encode(process.env.AUTH_SECRET!);
+import { prisma } from "@/lib/prisma";
+import type { SignInInput } from "@/lib/schemas";
+import { Prisma } from "@/lib/generated/prisma";
+
+const SESSION_COOKIE = "session";
+const SESSION_HOURS = 6;
+
+function getJwtKey() {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET no está configurado.");
+  return new TextEncoder().encode(secret);
+}
 
 export interface UsuarioSesion extends JWTPayload {
   IdUser: string;
   Usuario: string;
+  Email: string;
   Nombre?: string | null;
   FotoUrl?: string | null;
   Rol: string;
@@ -25,184 +30,161 @@ export interface UsuarioSesion extends JWTPayload {
   DebeCambiar: boolean;
 }
 
-// Generar token JWT
-export async function encrypt(payload: UsuarioSesion) {
-  return new SignJWT(payload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("6h") // Token válido 6 horas
-    .sign(key);
-}
-
-// Verificar token y obtener payload
-export const decrypt = async (token: string): Promise<UsuarioSesion | null> => {
-  try {
-    const { payload } = await jwtVerify<JWTPayload>(token, key, { algorithms: ["HS256"] });
-    return {
-      IdUser: payload.IdUser as string,
-      Usuario: payload.Usuario as string,
-      Rol: payload.Rol as string,
-      Nombre: payload.Nombre as string | null,
-      FotoUrl: payload.FotoUrl as string | null,
-      IdRol: payload.IdRol as string,
-      Permiso: (payload.Permiso as string[]) || [],
-      DebeCambiar: payload.DebeCambiar === true || payload.DebeCambiar === "True",
-      iss: payload.iss as string,
-      aud: payload.aud as string,
-    };
-  } catch (err: any) {
-    console.error("Error al decodificar token:", err.name === "JWTExpired" ? "Token expirado" : err);
-    return null;
-  }
-};
-
-// ------------------------------
-// TIPOS GENERALES
-// ------------------------------
 export interface LoginResult {
   success?: string;
   error?: string;
   redirect?: string;
 }
 
-type AuthDbResult = {
-  token: string;
-  debeCambiar: boolean;
-};
+type AuthDbResult = { token: string; debeCambiar: boolean };
 
-// ------------------------------
-// GESTIÓN DE COOKIE DE SESIÓN
-// ------------------------------
-const setSessionCookie = (token: string) => {
-  const expires = new Date(Date.now() + 6 * 60 * 60 * 1000);
-  cookies().set("session", token, {
-    expires,
+const usuarioWithRolArgs = Prisma.validator<Prisma.UsuarioDefaultArgs>()({
+  include: { rol: { include: { permisos: { include: { permiso: true } } } } },
+});
+
+type UsuarioConRol = Prisma.UsuarioGetPayload<typeof usuarioWithRolArgs>;
+
+export async function encrypt(payload: UsuarioSesion) {
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setIssuer("motormarket")
+    .setAudience("motormarket-web")
+    .setExpirationTime(`${SESSION_HOURS}h`)
+    .sign(getJwtKey());
+}
+
+export async function decrypt(token: string): Promise<UsuarioSesion | null> {
+  try {
+    const { payload } = await jwtVerify(token, getJwtKey(), {
+      algorithms: ["HS256"],
+      issuer: "motormarket",
+      audience: "motormarket-web",
+    });
+
+    return {
+      IdUser: String(payload.IdUser),
+      Usuario: String(payload.Usuario),
+      Email: String(payload.Email),
+      Rol: String(payload.Rol),
+      Nombre: (payload.Nombre as string | null | undefined) ?? null,
+      FotoUrl: (payload.FotoUrl as string | null | undefined) ?? null,
+      IdRol: String(payload.IdRol),
+      Permiso: Array.isArray(payload.Permiso) ? payload.Permiso.map(String) : [],
+      DebeCambiar: payload.DebeCambiar === true,
+      iss: payload.iss,
+      aud: payload.aud,
+      exp: payload.exp,
+      iat: payload.iat,
+    };
+  } catch (error) {
+    console.error("Error al decodificar token de sesión:", error);
+    return null;
+  }
+}
+
+async function setSessionCookie(token: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE, token, {
+    expires: new Date(Date.now() + SESSION_HOURS * 60 * 60 * 1000),
     httpOnly: true,
     path: "/",
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   });
-};
-
-export const getSession = async (): Promise<UsuarioSesion | null> => {
-  const token = cookies().get("session")?.value;
-  return token ? decrypt(token) : null;
-};
-
-export const getSessionPermisos = async (): Promise<string[] | null> => {
-  const sess = await getSession();
-  return sess?.Permiso || null;
-};
-
-export const signOut = async () => {
-  cookies().delete("session");
-};
-
-// ------------------------------
-// LOGIN / RESET PASSWORD
-// ------------------------------
-export const login = async (credentials: TSchemaSignIn, redirect: string): Promise<LoginResult> => {
-  const parsed = schemaSignIn.safeParse(credentials);
-  if (!parsed.success) return { error: "Usuario o contraseña inválidos" };
-
-  const { usuario, contrasena } = parsed.data;
-  const authResult = await authenticateDB(usuario, contrasena);
-  if (!authResult) return { error: "Usuario o contraseña inválidos" };
-
-  setSessionCookie(authResult.token);
-  return { success: "Login OK", redirect: authResult.debeCambiar ? "/reset-password" : redirect };
-};
-
-export const resetPassword = async (credentials: TSchemaResetPassword, username: string): Promise<LoginResult> => {
-  const parsed = schemaResetPassword.safeParse(credentials);
-  if (!parsed.success) return { error: "Error al cambiar la contraseña" };
-
-  const token = await changePassword(username, parsed.data.confirmar);
-  if (!token) return { error: "Error al cambiar la contraseña" };
-
-  setSessionCookie(token);
-  return { success: "Contraseña cambiada con éxito" };
-};
-
-// ------------------------------
-// AUTENTICACIÓN CON BASE DE DATOS (Prisma)
-// ------------------------------
-const usuarioWithRolArgs = Prisma.validator<Prisma.UsuarioDefaultArgs>()({
-  include: {
-    rol: { include: { permisos: { include: { permiso: true } } } },
-
-  },
-});
-type UsuarioConRol = Prisma.UsuarioGetPayload<typeof usuarioWithRolArgs>;
-
-async function authenticateDB(username: string, password: string): Promise<AuthDbResult | null> {
-  try {
-    const user: UsuarioConRol | null = await prisma.usuario.findFirst({
-      where: { usuario: username },
-      include: usuarioWithRolArgs.include,
-    });
-    if (!user || !(await bcrypt.compare(password, user.contrasena))) return null;
-
-    const permisos = user.rol.permisos.map((rp: { permiso: { nombre: any; }; }) => rp.permiso.nombre);
-
-    const payload: UsuarioSesion = {
-      IdUser: user.id,
-      Usuario: user.usuario,
-      Rol: user.rol.nombre,
-      Nombre: user.nombre,
-      FotoUrl: user.fotoUrl,
-      IdRol: user.rol_id,
-      Permiso: permisos,
-      DebeCambiar: user.DebeCambiarPassword!,
-      iss: "your-issuer",
-      aud: "your-audience",
-    };
-
-    return {
-      token: await encrypt(payload),
-      debeCambiar: payload.DebeCambiar,
-    };
-  } catch (err) {
-    console.error("Error en authenticateDB:", err);
-    return null;
-  }
 }
 
-// ------------------------------
-// CAMBIO DE CONTRASEÑA
-// ------------------------------
-async function changePassword(username: string, newPassword: string): Promise<string | null> {
-  try {
-    const user = await prisma.usuario.findFirst({
-      where: { usuario: username },
-      include: usuarioWithRolArgs.include,
-    });
-    if (!user) return null;
+export async function getSession(): Promise<UsuarioSesion | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  return token ? decrypt(token) : null;
+}
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    const updated = await prisma.usuario.update({
-      where: { id: user.id },
-      data: { contrasena: hashedPassword, DebeCambiarPassword: false },
-      include: usuarioWithRolArgs.include,
-    });
+export async function requireSession() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.DebeCambiar) redirect("/login?message=cambiar-password");
+  return session;
+}
 
-    const permisos = updated.rol.permisos.map((rp: { permiso: { nombre: any; }; }) => rp.permiso.nombre);
-    const payload: UsuarioSesion = {
-      IdUser: updated.id,
-      Usuario: updated.usuario,
-      Rol: updated.rol.nombre,
-      Nombre: updated.nombre,
-      FotoUrl: updated.fotoUrl,
-      IdRol: updated.rol_id,
-      Permiso: permisos,
-      DebeCambiar: updated.DebeCambiarPassword!,
-      iss: "your-issuer",
-      aud: "your-audience",
-    };
+export async function getSessionPermisos(): Promise<string[]> {
+  const session = await getSession();
+  return session?.Permiso ?? [];
+}
 
-    return encrypt(payload);
-  } catch (err) {
-    console.error("Error en changePassword:", err);
-    return null;
-  }
+export async function signOut() {
+  const cookieStore = await cookies();
+  cookieStore.delete(SESSION_COOKIE);
+  redirect("/login");
+}
+
+export async function login(credentials: SignInInput, nextPath = "/dashboard"): Promise<LoginResult> {
+  const usuario = credentials.usuario?.trim();
+  const contrasena = credentials.contrasena?.trim();
+  if (!usuario || !contrasena) return { error: "Usuario y contraseña son obligatorios." };
+
+  const authResult = await authenticateDB(usuario, contrasena);
+  if (!authResult) return { error: "Usuario o contraseña inválidos." };
+
+  await setSessionCookie(authResult.token);
+  return { success: "Sesión iniciada correctamente.", redirect: authResult.debeCambiar ? "/login?message=cambiar-password" : nextPath };
+}
+
+function buildPayload(user: UsuarioConRol): UsuarioSesion {
+  return {
+    IdUser: user.id,
+    Usuario: user.usuario,
+    Email: user.email,
+    Rol: user.rol.nombre,
+    Nombre: user.nombre,
+    FotoUrl: user.fotoUrl,
+    IdRol: user.rol_id,
+    Permiso: user.rol.permisos.filter((rp) => rp.permiso.activo).map((rp) => rp.permiso.nombre),
+    DebeCambiar: user.DebeCambiarPassword ?? false,
+  };
+}
+
+async function authenticateDB(usernameOrEmail: string, password: string): Promise<AuthDbResult | null> {
+  const user = await prisma.usuario.findFirst({
+    where: {
+      activo: true,
+      OR: [{ usuario: usernameOrEmail }, { email: usernameOrEmail }],
+    },
+    include: usuarioWithRolArgs.include,
+  });
+
+  if (!user || !user.rol.activo) return null;
+  const passwordOk = await bcrypt.compare(password, user.contrasena);
+  if (!passwordOk) return null;
+
+  const payload = buildPayload(user);
+  return { token: await encrypt(payload), debeCambiar: payload.DebeCambiar };
+}
+
+export async function changePassword(username: string, newPassword: string): Promise<LoginResult> {
+  if (newPassword.trim().length < 8) return { error: "La contraseña debe tener al menos 8 caracteres." };
+  const user = await prisma.usuario.findFirst({ where: { usuario: username }, include: usuarioWithRolArgs.include });
+  if (!user) return { error: "No se encontró el usuario." };
+
+  const updated = await prisma.usuario.update({
+    where: { id: user.id },
+    data: { contrasena: await bcrypt.hash(newPassword, 12), DebeCambiarPassword: false },
+    include: usuarioWithRolArgs.include,
+  });
+
+  await setSessionCookie(await encrypt(buildPayload(updated)));
+  return { success: "Contraseña actualizada correctamente.", redirect: "/dashboard" };
+}
+
+export async function createSessionTokenForUserId(userId: string): Promise<string | null> {
+  const user = await prisma.usuario.findUnique({ where: { id: userId }, include: usuarioWithRolArgs.include });
+  if (!user || !user.activo || !user.rol.activo) return null;
+  return encrypt(buildPayload(user));
+}
+
+export async function createSessionForUserId(userId: string): Promise<LoginResult> {
+  const token = await createSessionTokenForUserId(userId);
+  if (!token) return { error: "Usuario inactivo o sin rol válido." };
+  await setSessionCookie(token);
+  return { success: "Sesión iniciada correctamente.", redirect: "/dashboard" };
 }
