@@ -175,3 +175,16 @@ export async function changePassword(username: string, newPassword: string): Pro
   await setSessionCookie(await encrypt(buildPayload(updated)));
   return { success: "Contraseña actualizada correctamente.", redirect: "/dashboard" };
 }
+
+export async function createSessionTokenForUserId(userId: string): Promise<string | null> {
+  const user = await prisma.usuario.findUnique({ where: { id: userId }, include: usuarioWithRolArgs.include });
+  if (!user || !user.activo || !user.rol.activo) return null;
+  return encrypt(buildPayload(user));
+}
+
+export async function createSessionForUserId(userId: string): Promise<LoginResult> {
+  const token = await createSessionTokenForUserId(userId);
+  if (!token) return { error: "Usuario inactivo o sin rol válido." };
+  await setSessionCookie(token);
+  return { success: "Sesión iniciada correctamente.", redirect: "/dashboard" };
+}

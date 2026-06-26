@@ -1,6 +1,8 @@
+import { PERMISSIONS, requirePermission } from "@/lib/permissions";
 import { VehicleForm } from "./vehicle-form";
 
-export default function NewVehiclePage() {
+export default async function NewVehiclePage() {
+  await requirePermission(PERMISSIONS.carsCreate);
   return (
     <div className="space-y-6">
       <div>

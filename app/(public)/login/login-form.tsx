@@ -26,6 +26,12 @@ export function LoginForm({ next = "/dashboard" }: { next?: string }) {
       <Button className="w-full" disabled={pending} type="submit">
         <LogIn className="size-4" /> {pending ? "Validando..." : "Iniciar sesión"}
       </Button>
+      <div className="space-y-3">
+      <div className="relative py-1 text-center text-xs uppercase tracking-widest text-muted-foreground">o</div>
+      <Button asChild className="w-full" variant="outline">
+        <a href="/api/auth/google">Continuar con Google</a>
+      </Button>
+    </div>
     </form>
   );
 }

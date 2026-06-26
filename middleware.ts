@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+const protectedPrefixes = ["/dashboard", "/vehiculos", "/leads", "/favoritos", "/roles"];
+
 export function middleware(request: NextRequest) {
   const hasSession = request.cookies.has("session");
-  const isProtected = request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/vehiculos") || request.nextUrl.pathname.startsWith("/leads");
+  const isProtected = protectedPrefixes.some((prefix) => request.nextUrl.pathname.startsWith(prefix));
 
   if (isProtected && !hasSession) {
     const loginUrl = new URL("/login", request.url);
@@ -13,4 +15,4 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/dashboard/:path*", "/vehiculos/:path*", "/leads/:path*"] };
+export const config = { matcher: ["/dashboard/:path*", "/vehiculos/:path*", "/leads/:path*", "/favoritos/:path*", "/roles/:path*"] };

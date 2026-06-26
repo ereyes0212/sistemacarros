@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Car, LayoutDashboard, MessageSquare, PlusCircle } from "lucide-react";
+import { Car, Heart, LayoutDashboard, MessageSquare, PlusCircle, ShieldCheck } from "lucide-react";
 
 import { requireSession } from "@/auth";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/vehiculos", label: "Vehículos", icon: Car },
   { href: "/leads", label: "Leads", icon: MessageSquare },
+  { href: "/favoritos", label: "Favoritos", icon: Heart },
+  { href: "/roles", label: "Roles", icon: ShieldCheck },
   { href: "/vehiculos/nuevo", label: "Publicar", icon: PlusCircle },
 ];
 

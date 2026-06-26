@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import { PERMISSIONS, requirePermission } from "@/lib/permissions";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default async function LeadsPage() {
+  await requirePermission(PERMISSIONS.leadsView);
   const leads = await prisma.vehicleLead.findMany({ orderBy: { createdAt: "desc" }, include: { vehicle: true }, take: 50 });
 
   return (

@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession, signOut } from "@/auth";
+import { signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { PERMISSIONS, requirePermission } from "@/lib/permissions";
 import { optionalString, requireNumber, requireString } from "@/lib/schemas";
 
 function slugify(value: string) {
@@ -14,7 +15,7 @@ export async function signOutAction() {
 }
 
 export async function createVehicleAction(_prevState: { error?: string; success?: string }, formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission(PERMISSIONS.carsCreate);
 
   try {
     const title = requireString(formData.get("title"), "título");

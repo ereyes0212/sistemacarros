@@ -3,8 +3,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
+import { PERMISSIONS, requirePermission } from "@/lib/permissions";
 
 export default async function VehiclesPage() {
+  await requirePermission(PERMISSIONS.carsView);
   const vehicles = await prisma.vehicle.findMany({
     orderBy: { createdAt: "desc" },
     include: { brand: true, model: true, category: true, leads: true },

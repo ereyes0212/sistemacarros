@@ -1,9 +1,11 @@
 import { Car, CheckCircle2, Clock, MessageSquare } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import { PERMISSIONS, requirePermission } from "@/lib/permissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function DashboardPage() {
+  await requirePermission(PERMISSIONS.dashboardView);
   const [vehicles, approved, pending, leads] = await Promise.all([
     prisma.vehicle.count(),
     prisma.vehicle.count({ where: { listingStatus: "APPROVED" } }),
