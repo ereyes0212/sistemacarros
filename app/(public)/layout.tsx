@@ -1,39 +1,25 @@
 import React from "react";
+import Link from "next/link";
 import { getSession } from "@/auth";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
-import { StoreNavbar } from "@/src/components/ecommerce/store-navbar";
-import { StoreFooter } from "@/src/components/ecommerce/store-footer";
-import { CartHydrator } from "@/src/components/ecommerce/cart-hydrator";
-import { WishlistHydrator } from "@/src/components/ecommerce/wishlist-hydrator";
+import { Button } from "@/components/ui/button";
 
-async function getCartCount() {
-  try {
-    const token = cookies().get("guest_cart")?.value;
-    if (!token) return 0;
-    const cart = await prisma.cart.findUnique({
-      where: { token },
-      include: { items: true },
-    });
-    return cart?.items.reduce((acc, item) => acc + item.quantity, 0) ?? 0;
-  } catch {
-    return 0;
-  }
-}
-
-const PublicLayout: React.FC<{ children: React.ReactNode }> = async ({
-  children,
-}) => {
-  const [cartCount, session] = await Promise.all([getCartCount(), getSession()]);
-  const accountHref = session ? "/mi-perfil" : "/login";
+const PublicLayout: React.FC<{ children: React.ReactNode }> = async ({ children }) => {
+  const session = await getSession();
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <CartHydrator />
-      <WishlistHydrator enabled={Boolean(session?.IdUser)} />
-      <StoreNavbar cartCount={cartCount} accountHref={accountHref} />
+      <header className="border-b bg-background/80 backdrop-blur">
+        <nav className="container mx-auto flex items-center justify-between px-4 py-4">
+          <Link href="/" className="font-bold tracking-tight text-primary">MotorMarket</Link>
+          <div className="flex items-center gap-4 text-sm">
+            <Link href="/productos" className="hover:text-primary">Vehículos</Link>
+            <Link href="/login" className="hover:text-primary">{session ? "Mi cuenta" : "Ingresar"}</Link>
+            <Button asChild size="sm"><Link href="/productos">Buscar carro</Link></Button>
+          </div>
+        </nav>
+      </header>
       <main className="flex-1">{children}</main>
-      <StoreFooter />
+      <footer className="border-t py-6 text-center text-sm text-muted-foreground">Marketplace de carros con publicaciones verificadas, leads y favoritos.</footer>
     </div>
   );
 };

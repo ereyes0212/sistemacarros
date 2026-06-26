@@ -1,61 +1,12 @@
 import HeaderComponent from "@/components/HeaderComponent";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import NoAcceso from "@/components/noAccess";
-import { formatHNL } from "@/src/lib/currency";
-import { getSessionPermisos } from "@/auth";
-import { LayoutDashboard } from "lucide-react";
-import { getDashboardKpis } from "./actions";
-import { DashboardCharts } from "./components/dashboard-charts";
+import { BarChart3 } from "lucide-react";
+import { getDashboardData } from "./actions";
 
-export default async function AdminDashboardPage() {
-  const permisos = await getSessionPermisos();
-  if (!permisos?.includes("ver_dashboard")) return <NoAcceso />;
-  const {
-    products,
-    orders,
-    users,
-    paidOrders,
-    activeCoupons,
-    activeShippingMethods,
-    sales,
-    salesByCategory,
-    orderStatusDistribution,
-  } = await getDashboardKpis();
-
-  const conversionRate = orders > 0 ? (paidOrders / orders) * 100 : 0;
-
-  const kpis = [
-    { label: "Productos", value: products.toString() },
-    { label: "Pedidos totales", value: orders.toString() },
-    { label: "Pedidos pagados", value: paidOrders.toString() },
-    { label: "Tasa de pago", value: `${conversionRate.toFixed(1)}%` },
-    { label: "Usuarios", value: users.toString() },
-    { label: "Cupones activos", value: activeCoupons.toString() },
-    { label: "Métodos de envío activos", value: activeShippingMethods.toString() },
-    { label: "Venta acumulada", value: formatHNL(sales) },
+export default async function DashboardPage() {
+  const data = await getDashboardData();
+  const cards = [
+    ["Vehículos", data.vehicles], ["Aprobados", data.approved], ["Pendientes", data.pending], ["Vendidos", data.sold], ["Leads", data.leads], ["Comentarios pendientes", data.comments],
   ];
-
-  return (
-    <div className="space-y-4">
-      <HeaderComponent
-        Icon={LayoutDashboard}
-        description="Resumen general del panel administrativo"
-        screenName="Dashboard"
-      />
-      <main className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {kpis.map((kpi) => (
-          <Card key={kpi.label}>
-            <CardHeader>
-              <CardTitle>{kpi.label}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-3xl font-bold">{kpi.value}</CardContent>
-          </Card>
-        ))}
-      </main>
-      <DashboardCharts
-        orderStatusDistribution={orderStatusDistribution}
-        salesByCategory={salesByCategory}
-      />
-    </div>
-  );
+  return <div className="container mx-auto py-2"><HeaderComponent Icon={BarChart3} description="Indicadores principales del marketplace automotriz" screenName="Dashboard" /><div className="grid gap-4 md:grid-cols-3">{cards.map(([label, value]) => <Card key={label}><CardHeader><CardTitle className="text-sm text-muted-foreground">{label}</CardTitle></CardHeader><CardContent className="text-3xl font-bold">{value}</CardContent></Card>)}</div><Card className="mt-4"><CardHeader><CardTitle>Publicaciones por estado</CardTitle></CardHeader><CardContent className="space-y-2">{data.byStatus.map((item) => <div key={item.listingStatus} className="flex justify-between rounded-md border p-3"><span>{item.listingStatus}</span><strong>{item._count._all}</strong></div>)}</CardContent></Card></div>;
 }

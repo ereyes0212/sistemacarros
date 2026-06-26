@@ -1,50 +1,31 @@
-import { ProductCard } from "@/src/components/ecommerce/product-card";
-import { ProductFilters } from "@/src/components/ecommerce/product-filters";
-import { SortSelect } from "@/src/components/ecommerce/sort-select";
-import type { Prisma } from "@/lib/generated/prisma";
+import Link from "next/link";
 import type { Metadata } from "next";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { getProductosCatalogo } from "./actions";
-import { pickFirstValidImageUrl } from "@/src/lib/image-url";
-import { getWishlistProductIdsForCurrentUser } from "@/src/actions/wishlist-actions";
+import type { Prisma } from "@/lib/generated/prisma";
+import { VehicleCard } from "@/components/marketplace/vehicle-card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { getVehiculosCatalogo } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Catalogo | Tienda",
-  description: "Explora nuestro catalogo completo de productos con filtros por categoria, marca y precio.",
+  title: "Vehículos | MotorMarket",
+  description: "Explora carros disponibles con filtros por categoría, marca, precio, año y kilometraje.",
 };
+
+const fallbackImage = "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=900&q=80";
 
 function buildHref(searchParams: Record<string, string | string[] | undefined>, page: number) {
   const params = new URLSearchParams();
-
   for (const [key, rawValue] of Object.entries(searchParams)) {
     if (key === "page") continue;
     if (typeof rawValue === "string" && rawValue.length > 0) params.set(key, rawValue);
-    if (Array.isArray(rawValue)) {
-      for (const value of rawValue) {
-        if (value.length > 0) params.append(key, value);
-      }
-    }
   }
-
   params.set("page", String(page));
   return `/productos?${params.toString()}`;
 }
 
-export default async function ProductosPage({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
+export default async function ProductosPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
   const categorySlug = typeof searchParams.categoria === "string" ? searchParams.categoria : undefined;
   const brandSlug = typeof searchParams.marca === "string" ? searchParams.marca : undefined;
   const min = searchParams.min ? Number(searchParams.min) : undefined;
@@ -52,110 +33,69 @@ export default async function ProductosPage({
   const query = typeof searchParams.q === "string" ? searchParams.q : undefined;
   const sort = typeof searchParams.orden === "string" ? searchParams.orden : "reciente";
   const page = Math.max(1, Number(typeof searchParams.page === "string" ? searchParams.page : "1") || 1);
-  const pageSize = 24;
+  const pageSize = 12;
 
-  const where: Prisma.ProductWhereInput = {
-    active: true,
+  const where: Prisma.VehicleWhereInput = {
+    listingStatus: "APPROVED",
+    status: { in: ["AVAILABLE", "RESERVED"] },
     ...(categorySlug && { category: { slug: categorySlug } }),
     ...(brandSlug && { brand: { slug: brandSlug } }),
-    ...(query && { OR: [{ name: { contains: query } }, { description: { contains: query } }] }),
-    ...((min || max) && { basePrice: { ...(min && { gte: min }), ...(max && { lte: max }) } }),
+    ...(query && { OR: [{ title: { contains: query } }, { description: { contains: query } }, { city: { contains: query } }] }),
+    ...((min || max) && { price: { ...(min && { gte: min }), ...(max && { lte: max }) } }),
   };
 
-  const orderBy: Prisma.ProductOrderByWithRelationInput =
-    sort === "precio-asc" ? { basePrice: "asc" } : sort === "precio-desc" ? { basePrice: "desc" } : sort === "nombre" ? { name: "asc" } : { createdAt: "desc" };
+  const orderBy: Prisma.VehicleOrderByWithRelationInput =
+    sort === "precio-asc" ? { price: "asc" } : sort === "precio-desc" ? { price: "desc" } : sort === "anio" ? { year: "desc" } : { createdAt: "desc" };
 
-  const [catalogData, wishlistProductIds] = await Promise.all([
-    getProductosCatalogo(where, orderBy, page, pageSize),
-    getWishlistProductIdsForCurrentUser(),
-  ]);
-
-  const { categories, brands, products, totalCount } = catalogData;
-  const wishlistSet = new Set(wishlistProductIds);
-
+  const { categories, brands, vehicles, totalCount } = await getVehiculosCatalogo(where, orderBy, page, pageSize);
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  const categoryOptions = categories.map((c) => ({ slug: c.slug, name: c.name, count: c._count.products }));
-  const brandOptions = brands.filter((b) => b._count.products > 0).map((b) => ({ slug: b.slug, name: b.name, count: b._count.products }));
-
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
-      <div className="mb-8">
-        <h1 className="font-serif text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          {categorySlug ? categories.find((c) => c.slug === categorySlug)?.name ?? "Catalogo" : "Catalogo"}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">{totalCount} producto{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}</p>
-      </div>
-
-      <div className="mb-6 flex items-center justify-between gap-4 lg:hidden">
-        <ProductFilters categories={categoryOptions} brands={brandOptions} />
-        <SortSelect current={sort} />
-      </div>
-
-      <div className="flex gap-10">
-        <div className="hidden lg:block">
-          <ProductFilters categories={categoryOptions} brands={brandOptions} />
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <Badge variant="outline">Marketplace automotriz</Badge>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Vehículos disponibles</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{totalCount} carro{totalCount !== 1 ? "s" : ""} aprobado{totalCount !== 1 ? "s" : ""} para contactar vendedores.</p>
         </div>
-
-        <div className="flex-1">
-          <div className="mb-6 hidden items-center justify-between lg:flex">
-            <p className="text-sm text-muted-foreground">Mostrando {products.length} de {totalCount}</p>
-            <SortSelect current={sort} />
-          </div>
-
-          {products.length > 0 ? (
-            <>
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={{
-                      ...product,
-                      basePrice: Number(product.basePrice),
-                      compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
-                      image: pickFirstValidImageUrl(product.images.map((image) => image.url)),
-                      initialIsInWishlist: wishlistSet.has(product.id),
-                    }}
-                  />
-                ))}
-              </div>
-
-              {totalPages > 1 ? (
-                <Pagination className="mt-8">
-                  <PaginationContent>
-                    <PaginationItem>
-                      {page > 1 ? <PaginationPrevious href={buildHref(searchParams, page - 1)} /> : <PaginationPrevious href="#" className="pointer-events-none opacity-50" />}
-                    </PaginationItem>
-                    {page > 2 ? <PaginationItem><PaginationEllipsis /></PaginationItem> : null}
-                    {page > 1 ? (
-                      <PaginationItem>
-                        <PaginationLink href={buildHref(searchParams, page - 1)}>{page - 1}</PaginationLink>
-                      </PaginationItem>
-                    ) : null}
-                    <PaginationItem>
-                      <PaginationLink href={buildHref(searchParams, page)} isActive>{page}</PaginationLink>
-                    </PaginationItem>
-                    {page < totalPages ? (
-                      <PaginationItem>
-                        <PaginationLink href={buildHref(searchParams, page + 1)}>{page + 1}</PaginationLink>
-                      </PaginationItem>
-                    ) : null}
-                    {page < totalPages - 1 ? <PaginationItem><PaginationEllipsis /></PaginationItem> : null}
-                    <PaginationItem>
-                      {page < totalPages ? <PaginationNext href={buildHref(searchParams, page + 1)} /> : <PaginationNext href="#" className="pointer-events-none opacity-50" />}
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              ) : null}
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="text-lg font-semibold text-foreground">No se encontraron productos</p>
-              <p className="mt-2 text-sm text-muted-foreground">Intenta con otros filtros o explora todas las categorias.</p>
-            </div>
-          )}
-        </div>
+        <form className="flex flex-wrap gap-2" action="/productos">
+          <input name="q" defaultValue={query} placeholder="Marca, modelo o ciudad" className="rounded-md border px-3 py-2 text-sm" />
+          <select name="orden" defaultValue={sort} className="rounded-md border px-3 py-2 text-sm">
+            <option value="reciente">Más recientes</option>
+            <option value="precio-asc">Precio menor</option>
+            <option value="precio-desc">Precio mayor</option>
+            <option value="anio">Año más nuevo</option>
+          </select>
+          <Button type="submit">Filtrar</Button>
+        </form>
       </div>
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        {brands.filter((b) => b._count.vehicles > 0).slice(0, 12).map((brand) => (
+          <Button key={brand.slug} asChild variant={brandSlug === brand.slug ? "default" : "outline"} size="sm">
+            <Link href={`/productos?marca=${brand.slug}`}>{brand.name}</Link>
+          </Button>
+        ))}
+        {categories.filter((c) => c._count.vehicles > 0).slice(0, 8).map((category) => (
+          <Button key={category.slug} asChild variant={categorySlug === category.slug ? "default" : "secondary"} size="sm">
+            <Link href={`/productos?categoria=${category.slug}`}>{category.name}</Link>
+          </Button>
+        ))}
+      </div>
+
+      {vehicles.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {vehicles.map((vehicle) => (
+            <Link key={vehicle.id} href={`/productos/${vehicle.slug}`} className="block">
+              <VehicleCard vehicle={{ id: vehicle.id, title: vehicle.title, brand: vehicle.brand.name, model: vehicle.model?.name ?? "", year: vehicle.year, mileage: vehicle.mileage, fuelType: vehicle.fuelType, transmission: vehicle.transmission, price: Number(vehicle.price), city: vehicle.city, country: vehicle.country, image: vehicle.images[0]?.url ?? fallbackImage, status: vehicle.status, seller: vehicle.seller.nombre ?? vehicle.seller.usuario }} />
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border py-16 text-center"><p className="font-semibold">No se encontraron carros</p><p className="text-sm text-muted-foreground">Prueba con otros filtros o vuelve a ver todo el inventario.</p></div>
+      )}
+
+      {totalPages > 1 && <div className="mt-8 flex justify-center gap-3"><Button asChild variant="outline" disabled={page <= 1}><Link href={buildHref(searchParams, page - 1)}>Anterior</Link></Button><Button asChild variant="outline" disabled={page >= totalPages}><Link href={buildHref(searchParams, page + 1)}>Siguiente</Link></Button></div>}
     </div>
   );
 }

@@ -1,22 +1,12 @@
 "use server";
-
 import { prisma } from "@/lib/prisma";
 
 export async function getReportesData() {
-  const [orders, topProducts] = await Promise.all([
-    prisma.order.findMany({
-      select: { createdAt: true, grandTotal: true, orderNumber: true, status: true, discountTotal: true, shippingTotal: true },
-      orderBy: { createdAt: "desc" },
-      take: 30,
-    }),
-    prisma.orderItem.groupBy({
-      by: ["productId"],
-      _sum: { quantity: true, totalPrice: true },
-      orderBy: { _sum: { quantity: "desc" } },
-      take: 5,
-    }),
+  const [leads, vehiclesByBrand, latestLeads] = await Promise.all([
+    prisma.vehicleLead.groupBy({ by: ["status"], _count: { _all: true } }),
+    prisma.vehicle.groupBy({ by: ["brandId"], _count: { _all: true }, orderBy: { _count: { brandId: "desc" } }, take: 10 }),
+    prisma.vehicleLead.findMany({ include: { vehicle: { include: { brand: true } }, buyer: { select: { nombre: true, email: true } } }, orderBy: { createdAt: "desc" }, take: 25 }),
   ]);
-
-  const productNames = await prisma.product.findMany({ where: { id: { in: topProducts.map((item) => item.productId) } }, select: { id: true, name: true } });
-  return { orders, topProducts, productNames };
+  const brands = await prisma.vehicleBrand.findMany({ where: { id: { in: vehiclesByBrand.map((item) => item.brandId) } }, select: { id: true, name: true } });
+  return { leads, vehiclesByBrand, brands, latestLeads };
 }

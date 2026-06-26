@@ -1,37 +1,32 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/lib/generated/prisma";
+import { prisma } from "@/lib/prisma";
 
-export async function getProductosCatalogo(
-  where: Prisma.ProductWhereInput,
-  orderBy: Prisma.ProductOrderByWithRelationInput,
+export async function getVehiculosCatalogo(
+  where: Prisma.VehicleWhereInput,
+  orderBy: Prisma.VehicleOrderByWithRelationInput,
   page: number,
   pageSize: number,
 ) {
-  const currentPage = Math.max(1, page);
-  const take = Math.max(1, pageSize);
-  const skip = (currentPage - 1) * take;
-
-  const [categories, brands, products, totalCount] = await Promise.all([
-    prisma.category.findMany({
-      where: { products: { some: { active: true } } },
-      include: { _count: { select: { products: { where: { active: true } } } } },
-      orderBy: { name: "asc" },
-    }),
-    prisma.brand.findMany({
-      include: { _count: { select: { products: { where: { active: true } } } } },
-      orderBy: { name: "asc" },
-    }),
-    prisma.product.findMany({
+  const [categories, brands, vehicles, totalCount] = await Promise.all([
+    prisma.vehicleCategory.findMany({ select: { slug: true, name: true, _count: { select: { vehicles: true } } }, orderBy: { name: "asc" } }),
+    prisma.vehicleBrand.findMany({ select: { slug: true, name: true, _count: { select: { vehicles: true } } }, orderBy: { name: "asc" } }),
+    prisma.vehicle.findMany({
       where,
-      include: { category: true, brand: true, images: { where: { isMain: true }, take: 1 } },
       orderBy,
-      skip,
-      take,
+      include: {
+        brand: true,
+        model: true,
+        category: true,
+        images: { orderBy: [{ isMain: "desc" }, { sortOrder: "asc" }], take: 1 },
+        seller: { select: { nombre: true, usuario: true } },
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
     }),
-    prisma.product.count({ where }),
+    prisma.vehicle.count({ where }),
   ]);
 
-  return { categories, brands, products, totalCount };
+  return { categories, brands, vehicles, totalCount };
 }
