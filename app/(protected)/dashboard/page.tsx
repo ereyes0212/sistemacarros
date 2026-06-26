@@ -1,40 +1,61 @@
-import { Car, CheckCircle2, Clock, MessageSquare } from "lucide-react";
-
-import { prisma } from "@/lib/prisma";
+import HeaderComponent from "@/components/HeaderComponent";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import NoAcceso from "@/components/noAccess";
+import { formatHNL } from "@/src/lib/currency";
+import { getSessionPermisos } from "@/auth";
+import { LayoutDashboard } from "lucide-react";
+import { getDashboardKpis } from "./actions";
+import { DashboardCharts } from "./components/dashboard-charts";
 
-export default async function DashboardPage() {
-  const [vehicles, approved, pending, leads] = await Promise.all([
-    prisma.vehicle.count(),
-    prisma.vehicle.count({ where: { listingStatus: "APPROVED" } }),
-    prisma.vehicle.count({ where: { listingStatus: "PENDING_REVIEW" } }),
-    prisma.vehicleLead.count(),
-  ]);
+export default async function AdminDashboardPage() {
+  const permisos = await getSessionPermisos();
+  if (!permisos?.includes("ver_dashboard")) return <NoAcceso />;
+  const {
+    products,
+    orders,
+    users,
+    paidOrders,
+    activeCoupons,
+    activeShippingMethods,
+    sales,
+    salesByCategory,
+    orderStatusDistribution,
+  } = await getDashboardKpis();
 
-  const stats = [
-    { label: "Vehículos", value: vehicles, icon: Car },
-    { label: "Aprobados", value: approved, icon: CheckCircle2 },
-    { label: "Pendientes", value: pending, icon: Clock },
-    { label: "Leads", value: leads, icon: MessageSquare },
+  const conversionRate = orders > 0 ? (paidOrders / orders) * 100 : 0;
+
+  const kpis = [
+    { label: "Productos", value: products.toString() },
+    { label: "Pedidos totales", value: orders.toString() },
+    { label: "Pedidos pagados", value: paidOrders.toString() },
+    { label: "Tasa de pago", value: `${conversionRate.toFixed(1)}%` },
+    { label: "Usuarios", value: users.toString() },
+    { label: "Cupones activos", value: activeCoupons.toString() },
+    { label: "Métodos de envío activos", value: activeShippingMethods.toString() },
+    { label: "Venta acumulada", value: formatHNL(sales) },
   ];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <p className="font-semibold text-blue-700">Panel de control</p>
-        <h2 className="text-4xl font-black tracking-tight">Operación comercial del marketplace</h2>
-      </div>
-      <div className="grid gap-4 md:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.label}</CardTitle>
-              <stat.icon className="size-5 text-blue-600" />
+    <div className="space-y-4">
+      <HeaderComponent
+        Icon={LayoutDashboard}
+        description="Resumen general del panel administrativo"
+        screenName="Dashboard"
+      />
+      <main className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {kpis.map((kpi) => (
+          <Card key={kpi.label}>
+            <CardHeader>
+              <CardTitle>{kpi.label}</CardTitle>
             </CardHeader>
-            <CardContent><p className="text-4xl font-black">{stat.value}</p></CardContent>
+            <CardContent className="text-3xl font-bold">{kpi.value}</CardContent>
           </Card>
         ))}
-      </div>
+      </main>
+      <DashboardCharts
+        orderStatusDistribution={orderStatusDistribution}
+        salesByCategory={salesByCategory}
+      />
     </div>
   );
 }

@@ -1,19 +1,51 @@
 "use server";
 
-import { redirect } from "next/navigation";
-
 import { login } from "@/auth";
-import { requireString } from "@/lib/schemas";
+import { prisma } from "@/lib/prisma";
+import type { LoginActionState } from "./state";
 
-export async function loginAction(_prevState: { error?: string }, formData: FormData) {
-  const result = await login(
-    {
-      usuario: requireString(formData.get("usuario"), "usuario"),
-      contrasena: requireString(formData.get("contrasena"), "contraseña"),
-    },
-    String(formData.get("next") || "/dashboard"),
-  );
+export async function loginWithCredentialsAction(
+  _prevState: LoginActionState,
+  formData: FormData,
+): Promise<LoginActionState> {
+  const identifier = formData.get("identifier");
+  const contrasena = formData.get("contrasena");
+  const callbackUrl = formData.get("callbackUrl");
 
-  if (result.redirect) redirect(result.redirect);
-  return { error: result.error };
+  if (typeof identifier !== "string" || typeof contrasena !== "string") {
+    return { ok: false, message: "Debes ingresar usuario/correo y contraseña." };
+  }
+
+  const normalizedIdentifier = identifier.trim().toLowerCase();
+  if (!normalizedIdentifier || !contrasena.trim()) {
+    return { ok: false, message: "Debes ingresar usuario/correo y contraseña." };
+  }
+
+  let usuario = normalizedIdentifier;
+
+  if (normalizedIdentifier.includes("@")) {
+    const userByEmail = await prisma.usuario.findUnique({
+      where: { email: normalizedIdentifier },
+      select: { usuario: true },
+    });
+
+    if (!userByEmail) {
+      return { ok: false, message: "Usuario/correo o contraseña inválidos." };
+    }
+
+    usuario = userByEmail.usuario;
+  }
+
+  const safeCallback = typeof callbackUrl === "string" && callbackUrl.startsWith("/") ? callbackUrl : "/mi-perfil";
+  const result = await login({ usuario, contrasena }, safeCallback);
+
+  if (result.error) {
+    return { ok: false, message: "Usuario/correo o contraseña inválidos." };
+  }
+
+  return {
+    ok: true,
+    message: "Inicio de sesión exitoso.",
+    redirect: result.redirect ?? safeCallback,
+  };
 }
