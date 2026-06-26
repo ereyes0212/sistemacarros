@@ -1,5 +1,7 @@
 import { createSessionTokenForUserId } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import { randomBytes, randomUUID } from "crypto";
 
 export type GoogleProfile = {
   sub: string;
@@ -42,10 +44,56 @@ export async function exchangeCodeForGoogleProfile(code: string, origin: string)
   return profileResponse.json() as Promise<GoogleProfile>;
 }
 
+function buildUsernameFromEmail(email: string) {
+  const localPart = email.split("@")[0]?.toLowerCase().replace(/[^a-z0-9._-]/g, "") || "usuario";
+  return localPart.slice(0, 40);
+}
+
+async function buildUniqueUsername(email: string) {
+  const baseUsername = buildUsernameFromEmail(email);
+  let username = baseUsername;
+  let suffix = 1;
+
+  while (await prisma.usuario.findFirst({ where: { usuario: username } })) {
+    username = `${baseUsername}${suffix}`.slice(0, 50);
+    suffix += 1;
+  }
+
+  return username;
+}
+
+async function getGoogleDefaultRoleId() {
+  const role = await prisma.rol.findFirst({
+    where: {
+      activo: true,
+      nombre: { in: ["CLIENTE", "Comprador", "Vendedor"] },
+    },
+    orderBy: { nombre: "asc" },
+  });
+
+  if (!role) throw new Error("No existe un rol activo para registrar usuarios de Google.");
+  return role.id;
+}
+
 export async function getOrCreateGoogleSessionToken(profile: GoogleProfile) {
-  const existing = await prisma.usuario.findUnique({ where: { email: profile.email } });
-  if (!existing) throw new Error("El correo de Google no está registrado en el sistema.");
-  const token = await createSessionTokenForUserId(existing.id);
+  const normalizedEmail = profile.email.trim().toLowerCase();
+  const existing = await prisma.usuario.findUnique({ where: { email: normalizedEmail } });
+
+  const user = existing ?? await prisma.usuario.create({
+    data: {
+      id: randomUUID(),
+      usuario: await buildUniqueUsername(normalizedEmail),
+      email: normalizedEmail,
+      nombre: profile.name?.trim() || null,
+      fotoUrl: profile.picture || null,
+      rol_id: await getGoogleDefaultRoleId(),
+      contrasena: await bcrypt.hash(randomBytes(24).toString("base64"), 12),
+      activo: true,
+      DebeCambiarPassword: false,
+    },
+  });
+
+  const token = await createSessionTokenForUserId(user.id);
   if (!token) throw new Error("No se pudo crear la sesión para el usuario de Google.");
   return token;
 }

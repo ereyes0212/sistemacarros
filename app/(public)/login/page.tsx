@@ -89,7 +89,7 @@ export default async function LoginPage({
             <CardContent className="space-y-4 pt-2">
               {googleError ? (
                 <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
-                  No pudimos iniciar sesión con Google. Verifica que el correo esté registrado en el sistema.
+                  No pudimos iniciar sesión con Google. Inténtalo nuevamente o contacta al administrador.
                 </p>
               ) : null}
               <Suspense fallback={<div className="text-sm text-slate-500 dark:text-slate-400">Cargando...</div>}>
