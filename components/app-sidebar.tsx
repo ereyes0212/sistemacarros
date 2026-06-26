@@ -52,7 +52,7 @@ export async function AppSidebar() {
             <SidebarMenu>
               {filteredModules.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton href={item.url}>
+                  <SidebarMenuButton ref={item.url}>
                     <item.icon size={16} />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
@@ -62,7 +62,7 @@ export async function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>{usuario && <NavUser usuario={usuario} />}</SidebarFooter>
+      <SidebarFooter>{usuario && <NavUser  />}</SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

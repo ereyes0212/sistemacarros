@@ -19,20 +19,7 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui
 import LogoutButton from "./signOut";
 
 export function NavUser({
-    usuario,
-}: {
-    usuario: {
-
-        IdUser: string;
-        User: string;
-        Rol: string;
-        IdRol: string;
-
-        Permiso: string[];
-        Nombre?: string | null;
-        FotoUrl?: string | null;
-
-    }
+   
 }) {
 
     return (<SidebarMenu>
@@ -44,12 +31,12 @@ export function NavUser({
                         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                     >
                         <Avatar className="h-8 w-8 rounded-lg">
-                            <AvatarImage src={usuario?.FotoUrl ?? undefined} alt={usuario?.Nombre ?? usuario?.User} />
-                            <AvatarFallback className="rounded-lg">{(usuario.Nombre ?? usuario.User).toUpperCase()[0]}</AvatarFallback>
+                            {/* <AvatarImage src={usuario?.FotoUrl ?? undefined} alt={usuario?.Nombre ?? usuario?.User} /> */}
+                            {/* <AvatarFallback className="rounded-lg">{(usuario.Nombre ?? usuario.User).toUpperCase()[0]}</AvatarFallback> */}
                         </Avatar>
                         <div className="grid flex-1 text-left text-sm leading-tight">
-                            <span className="truncate font-semibold">{usuario?.Nombre ?? usuario?.User}</span>
-                            <span className="truncate text-xs">{usuario?.Rol}</span>
+                            {/* <span className="truncate font-semibold">{usuario?.Nombre ?? usuario?.User}</span> */}
+                            {/* <span className="truncate text-xs">{usuario?.Rol}</span> */}
                         </div>
                         <ChevronsUpDown className="ml-auto size-4" />
                     </SidebarMenuButton>
