@@ -47,7 +47,7 @@ export default function Home() {
 
         <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-8">
-            <Badge className="bg-blue-100 text-blue-700">Cars.com + MercadoLibre Autos para tu ecommerce</Badge>
+          
             <div className="space-y-5">
               <h1 className="max-w-4xl text-5xl font-black tracking-tight md:text-7xl">
                 Marketplace de carros con publicaciones, leads y moderación.
