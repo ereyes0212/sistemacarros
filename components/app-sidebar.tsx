@@ -62,7 +62,7 @@ export async function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>{usuario && <NavUser  />}</SidebarFooter>
+      <SidebarFooter>{usuario && <NavUser usuario={usuario} />}</SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
