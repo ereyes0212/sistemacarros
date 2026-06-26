@@ -35,7 +35,6 @@ export async function updateMiPerfil(
   });
 
   revalidatePath("/mi-perfil");
-  revalidatePath("/checkout");
 
   return { ok: true, message: "Perfil actualizado correctamente." };
 }

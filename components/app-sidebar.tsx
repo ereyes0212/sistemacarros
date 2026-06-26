@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Activity, BarChart3, ClipboardList, HandCoins, LayersIcon, Package, StickyNote, UserIcon, Users, UserRoundCheck, type LucideIcon } from "lucide-react";
+import { BarChart3, Car, LayersIcon, MessageSquare, ShieldCheck, UserIcon, type LucideIcon } from "lucide-react";
 
 type SidebarModule = {
   title: string;
@@ -24,17 +24,13 @@ type SidebarModule = {
 };
 
 const modules: SidebarModule[] = [
-  { title: "Dashboard", url: "/dashboard", icon: BarChart3, permisos: ["ver_dashboard", "ver_ventas"] },
+  { title: "Dashboard", url: "/dashboard", icon: BarChart3, permisos: ["ver_dashboard", "ver_vehiculos_admin"] },
+  { title: "Vehículos", url: "/productos-admin", icon: Car, permisos: ["ver_productos_admin", "ver_vehiculos_admin"] },
+  { title: "Categorías", url: "/categorias", icon: LayersIcon, permisos: ["ver_categorias_admin", "ver_vehiculos_admin"] },
+  { title: "Leads", url: "/reportes", icon: MessageSquare, permisos: ["ver_reportes", "ver_vehiculos_admin"] },
+  { title: "Comentarios", url: "/comentarios", icon: ShieldCheck, permisos: ["ver_comentarios", "ver_vehiculos_admin"] },
   { title: "Usuarios", url: "/usuarios", icon: UserIcon, permiso: "ver_usuarios" },
-  { title: "Jerarquía", url: "/usuarios/jerarquia", icon: Users, permiso: "super_admin" },
   { title: "Roles", url: "/roles", icon: LayersIcon, permiso: "ver_roles" },
-  { title: "Clientes", url: "/clientes", icon: Users, permiso: "ver_clientes" },
-  { title: "Asignaciones", url: "/clientes/asignaciones", icon: UserRoundCheck, permiso: "asignar_clientes" },
-  { title: "Productos", url: "/productos", icon: Package, permiso: "ver_productos" },
-  { title: "Ventas", url: "/ventas", icon: HandCoins, permiso: "ver_ventas" },
-  { title: "Notas", url: "/notas", icon: StickyNote, permiso: "ver_clientes" },
-  { title: "Tareas", url: "/tareas", icon: ClipboardList, permiso: "ver_tareas" },
-  { title: "Accesos", url: "/accesos", icon: Activity, permiso: "ver_online" },
 ];
 
 export async function AppSidebar() {
