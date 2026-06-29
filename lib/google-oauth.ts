@@ -62,20 +62,20 @@ async function buildUniqueUsername(email: string) {
   return username;
 }
 
-async function getGoogleDefaultRoleId() {
+async function getGoogleDefaultRoleId(requestedRole?: string) {
+  const roleName = requestedRole === "Vendedor" ? "Vendedor" : "Comprador";
   const role = await prisma.rol.findFirst({
     where: {
       activo: true,
-      nombre: { in: ["CLIENTE", "Comprador", "Vendedor"] },
+      nombre: roleName,
     },
-    orderBy: { nombre: "asc" },
   });
 
-  if (!role) throw new Error("No existe un rol activo para registrar usuarios de Google.");
+  if (!role) throw new Error(`No existe el rol activo ${roleName} para registrar usuarios de Google.`);
   return role.id;
 }
 
-export async function getOrCreateGoogleSessionToken(profile: GoogleProfile) {
+export async function getOrCreateGoogleSessionToken(profile: GoogleProfile, requestedRole?: string) {
   const normalizedEmail = profile.email.trim().toLowerCase();
   const existing = await prisma.usuario.findUnique({ where: { email: normalizedEmail } });
 
@@ -86,7 +86,7 @@ export async function getOrCreateGoogleSessionToken(profile: GoogleProfile) {
       email: normalizedEmail,
       nombre: profile.name?.trim() || null,
       fotoUrl: profile.picture || null,
-      rol_id: await getGoogleDefaultRoleId(),
+      rol_id: await getGoogleDefaultRoleId(requestedRole),
       contrasena: await bcrypt.hash(randomBytes(24).toString("base64"), 12),
       activo: true,
       DebeCambiarPassword: false,

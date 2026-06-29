@@ -40,6 +40,7 @@ export default function Login({ callbackUrl }: { callbackUrl?: string }) {
   const router = useRouter();
   const [openForgot, setOpenForgot] = useState(false);
   const [openRegister, setOpenRegister] = useState(false);
+  const [openGoogleRole, setOpenGoogleRole] = useState(false);
   const [isSubmittingRegister, setIsSubmittingRegister] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginState, loginAction] = useActionState(
@@ -138,7 +139,7 @@ export default function Login({ callbackUrl }: { callbackUrl?: string }) {
         <Button
           className="h-11 w-full rounded-xl border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
           type="button"
-          onClick={() => window.location.assign("/api/auth/google/start")}
+          onClick={() => setOpenGoogleRole(true)}
         >
           Continuar con Google
         </Button>
@@ -165,6 +166,34 @@ export default function Login({ callbackUrl }: { callbackUrl?: string }) {
           </Button>
         </div>
       </div>
+
+
+      <Dialog open={openGoogleRole} onOpenChange={setOpenGoogleRole}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Continuar con Google</DialogTitle>
+            <DialogDescription>
+              Antes de crear tu cuenta, selecciona si usarás MotorMarket para comprar o vender carros.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            className="mt-4 space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const formData = new FormData(event.currentTarget);
+              const role = formData.get("role") === "Vendedor" ? "Vendedor" : "Comprador";
+              window.location.assign(`/api/auth/google/start?role=${role}`);
+            }}
+          >
+            <div className="grid gap-3 rounded-2xl border p-3 sm:grid-cols-2">
+              <label className="rounded-xl border p-3 text-sm"><input className="mr-2" type="radio" name="role" value="Comprador" defaultChecked /> Comprar carro</label>
+              <label className="rounded-xl border p-3 text-sm"><input className="mr-2" type="radio" name="role" value="Vendedor" /> Vender carro</label>
+            </div>
+            <Button className="w-full" type="submit">Continuar con Google</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={openRegister} onOpenChange={setOpenRegister}>
         <DialogContent className="max-w-sm">

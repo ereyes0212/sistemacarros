@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,8 +33,8 @@ export function PerfilContactoForm({
   ciudad?: string | null;
   telefono?: string | null;
 }) {
-  const [profileState, profileAction] = useFormState(updateMiPerfil, initialState);
-  const [passwordState, passwordAction] = useFormState(changeMiPerfilPassword, initialState);
+  const [profileState, profileAction] = useActionState(updateMiPerfil, initialState);
+  const [passwordState, passwordAction] = useActionState(changeMiPerfilPassword, initialState);
 
   useEffect(() => {
     if (profileState.message) {

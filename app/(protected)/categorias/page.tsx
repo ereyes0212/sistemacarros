@@ -8,7 +8,7 @@ import { getCategorias } from "./actions";
 
 export default async function CategoriasPage() {
   const permisos = await getSessionPermisos();
-  if (!permisos?.some((permiso) => ["ver_categorias_admin", "ver_vehiculos_admin"].includes(permiso))) return <NoAcceso />;
+  if (!permisos?.some((permiso) => ["ver_carros"].includes(permiso))) return <NoAcceso />;
   const categorias = await getCategorias();
 
   return (

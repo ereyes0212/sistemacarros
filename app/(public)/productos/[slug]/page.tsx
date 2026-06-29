@@ -11,14 +11,16 @@ import { createVehicleLead, getVehicleDetail, getVehicleMetadata } from "./actio
 const currency = new Intl.NumberFormat("es-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const fallbackImage = "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80";
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const vehicle = await getVehicleMetadata(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const vehicle = await getVehicleMetadata(slug);
   if (!vehicle) return { title: "Vehículo no encontrado" };
   return { title: `${vehicle.title} | MotorMarket`, description: `${vehicle.brand.name} ${vehicle.model?.name ?? ""} ${vehicle.year}` };
 }
 
-export default async function VehicleDetailPage({ params }: { params: { slug: string } }) {
-  const vehicle = await getVehicleDetail(params.slug);
+export default async function VehicleDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const vehicle = await getVehicleDetail(slug);
   if (!vehicle) notFound();
   const mainImage = vehicle.images[0]?.url ?? fallbackImage;
 

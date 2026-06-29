@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+export type VehicleModerationState = { ok: boolean; message: string };
+
 export async function getVehiculosAdmin() {
   return prisma.vehicle.findMany({
     include: { brand: true, model: true, category: true, seller: { select: { nombre: true, usuario: true } } },
@@ -11,12 +13,14 @@ export async function getVehiculosAdmin() {
   });
 }
 
-export async function aprobarVehiculo(id: string, reviewerId?: string) {
+export async function aprobarVehiculo(id: string, reviewerId: string | undefined, _state: VehicleModerationState, _formData: FormData) {
   await prisma.vehicle.update({ where: { id }, data: { listingStatus: "APPROVED", reviewedById: reviewerId, reviewedAt: new Date(), rejectionReason: null } });
   revalidatePath("/productos-admin");
+  return { ok: true, message: "Vehículo aprobado correctamente." };
 }
 
-export async function rechazarVehiculo(id: string, reviewerId?: string) {
+export async function rechazarVehiculo(id: string, reviewerId: string | undefined, _state: VehicleModerationState, _formData: FormData) {
   await prisma.vehicle.update({ where: { id }, data: { listingStatus: "REJECTED", reviewedById: reviewerId, reviewedAt: new Date(), rejectionReason: "Rechazado desde panel administrativo" } });
   revalidatePath("/productos-admin");
+  return { ok: true, message: "Vehículo rechazado correctamente." };
 }
