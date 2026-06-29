@@ -25,8 +25,14 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/login?error=google_state_invalid`);
     }
 
+    const roleCookie = cookieHeader
+      .split(";")
+      .map((v) => v.trim())
+      .find((v) => v.startsWith("google_oauth_role="))
+      ?.split("=")[1];
+
     const profile = await exchangeCodeForGoogleProfile(code, origin);
-    const sessionToken = await getOrCreateGoogleSessionToken(profile);
+    const sessionToken = await getOrCreateGoogleSessionToken(profile, roleCookie);
 
     const response = NextResponse.redirect(`${origin}/mi-perfil`);
     response.cookies.set("session", sessionToken, {
@@ -37,6 +43,7 @@ export async function GET(request: Request) {
       secure: process.env.NODE_ENV === "production",
     });
     response.cookies.set("google_oauth_state", "", { path: "/", maxAge: 0 });
+    response.cookies.set("google_oauth_role", "", { path: "/", maxAge: 0 });
 
     return response;
   } catch(error) {
