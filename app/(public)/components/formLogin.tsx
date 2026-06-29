@@ -171,11 +171,15 @@ export default function Login({ callbackUrl }: { callbackUrl?: string }) {
           <DialogHeader>
             <DialogTitle>Registro con correo</DialogTitle>
             <DialogDescription>
-              Ingresa tu correo para crear tu cuenta. Te enviaremos una contraseña temporal para que la cambies al ingresar.
+              Crea tu cuenta y elige si quieres comprar o vender carros. Te enviaremos una contraseña temporal para que la cambies al ingresar.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleRegisterSubmit} className="mt-4 space-y-4">
+            <div className="grid gap-3 rounded-2xl border p-3 sm:grid-cols-2">
+              <label className="rounded-xl border p-3 text-sm"><input className="mr-2" type="radio" name="role" value="Comprador" defaultChecked /> Comprar carro</label>
+              <label className="rounded-xl border p-3 text-sm"><input className="mr-2" type="radio" name="role" value="Vendedor" /> Vender carro</label>
+            </div>
             <div className="space-y-2">
               <label htmlFor="register-email" className="text-sm font-medium">
                 Correo

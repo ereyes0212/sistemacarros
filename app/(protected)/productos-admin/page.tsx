@@ -11,7 +11,7 @@ const currency = new Intl.NumberFormat("es-US", { style: "currency", currency: "
 
 export default async function AdminVehiculosPage() {
   const [permisos, session, vehiculos] = await Promise.all([getSessionPermisos(), getSession(), getVehiculosAdmin()]);
-  if (!permisos?.some((permiso) => ["ver_productos_admin", "ver_vehiculos_admin"].includes(permiso))) return <NoAcceso />;
+  if (!permisos?.some((permiso) => ["ver_productos_admin", "ver_vehiculos_admin", "moderar_carros"].includes(permiso))) return <NoAcceso />;
 
   return (
     <div className="container mx-auto py-2">

@@ -21,17 +21,21 @@ const permissions = [
   ["crear_usuarios", "Crear usuarios"],
   ["editar_usuarios", "Editar usuarios"],
   ["eliminar_usuarios", "Eliminar usuarios"],
+  ["ver_mi_perfil", "Ver mi perfil"],
   ["ver_favoritos", "Ver favoritos"],
   ["crear_favoritos", "Agregar o quitar favoritos"],
   ["ver_ordenes", "Ver órdenes o solicitudes de compra"],
+  ["ver_permisos", "Ver permisos"],
+  ["ver_reportes_admin", "Ver reportes administrativos"],
+  ["ver_comentarios", "Ver comentarios"],
   ["crear_ordenes", "Crear solicitudes de compra"],
 ];
 
 const rolePermissions = {
   Administrador: permissions.map(([name]) => name),
-  Vendedor: ["ver_dashboard", "ver_carros", "crear_carros", "editar_carros", "ver_leads", "editar_leads"],
-  Comprador: ["ver_dashboard", "ver_carros", "ver_favoritos", "crear_favoritos", "crear_ordenes"],
-  Moderador: ["ver_dashboard", "ver_carros", "moderar_carros", "ver_leads"],
+  Vendedor: ["ver_dashboard", "ver_mi_perfil", "ver_carros", "crear_carros", "editar_carros", "eliminar_carros", "ver_leads", "editar_leads"],
+  Comprador: ["ver_dashboard", "ver_mi_perfil", "ver_carros", "ver_favoritos", "crear_favoritos", "crear_ordenes"],
+  Moderador: ["ver_dashboard", "ver_mi_perfil", "ver_carros", "moderar_carros", "ver_leads", "ver_comentarios"],
 };
 
 async function main() {
