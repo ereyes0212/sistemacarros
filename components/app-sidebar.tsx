@@ -17,7 +17,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import {
-  ChevronDown, ChevronUp, LayersIcon, Settings, UserIcon,
+  Car, ChevronDown, ChevronUp, Heart, LayersIcon, Settings, ShieldCheck, ShoppingBag, UserIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { NavUser } from "./nav-user";
@@ -30,29 +30,26 @@ const mantenimientoItems = [
 ];
 
 const items = [
-  { title: "Mi Perfil", url: "/mi-perfil", icon: UserIcon, permiso: "ver_mi_perfil" },
+  { title: "Dashboard", url: "/dashboard", icon: LayersIcon, permiso: "ver_dashboard" },
+  { title: "Mi Perfil", url: "/mi-perfil", icon: UserIcon },
 ];
 
 
-const tiendaItems = [
-  { title: "Ver tienda", url: "/" },
-  { title: "Productos tienda", url: "/productos" },
-  { title: "Carrito", url: "/carrito" },
-  { title: "Checkout", url: "/checkout" },
-  { title: "Mis pedidos", url: "/perfil" },
+const marketplaceItems = [
+  { title: "Comprar carros", url: "/productos", icon: ShoppingBag, permiso: "ver_carros" },
+  { title: "Mis favoritos", url: "/favoritos", icon: Heart, permiso: "ver_favoritos" },
+];
+
+const sellerItems = [
+  { title: "Mis vehículos", url: "/mis-vehiculos", icon: Car, permiso: "crear_carros" },
+  { title: "Publicar vehículo", url: "/mis-vehiculos/create", icon: Car, permiso: "crear_carros" },
 ];
 
 const ecommerceAdminItems = [
-  { title: "Dashboard", url: "/dashboard", permiso: "ver_dashboard" },
-  { title: "Productos", url: "/productos-admin", permiso: "ver_productos_admin" },
-  { title: "Categorías", url: "/categorias", permiso: "ver_categorias_admin" },
-  { title: "Pedidos", url: "/pedidos", permiso: "ver_pedidos_admin" },
-  { title: "Usuarios", url: "/usuarios", permiso: "ver_usuarios" },
-  { title: "Cupones", url: "/cupones", permiso: "ver_cupones_admin" },
-  { title: "Métodos de envío", url: "/metodos-envio", permiso: "ver_metodos_envio_admin" },
+  { title: "Revisión de vehículos", url: "/productos-admin", permiso: "moderar_carros" },
   { title: "Reportes", url: "/reportes", permiso: "ver_reportes_admin" },
-  { title: "Proveedores", url: "/proveedores", permiso: "ver_proveedores_admin" },
   { title: "Comentarios", url: "/comentarios", permiso: "ver_comentarios" },
+  { title: "Usuarios", url: "/usuarios", permiso: "ver_usuarios" },
 ];
 
 export async function AppSidebar() {
@@ -61,13 +58,15 @@ export async function AppSidebar() {
 
 
   const filteredItems = items.filter((item) => {
-    if (!permisosUsuario.includes(item.permiso)) return false;
+    if (item.permiso && !permisosUsuario.includes(item.permiso)) return false;
     return true;
   });
   const filteredMantenimientoItems = mantenimientoItems.filter((item) => permisosUsuario.includes(item.permiso));
   const showMantenimiento = filteredMantenimientoItems.length > 0;
   const filteredEcommerceAdminItems = ecommerceAdminItems.filter((item) => permisosUsuario.includes(item.permiso));
-  const showEcommerceAdmin = usuario?.Rol === "ADMIN" && filteredEcommerceAdminItems.length > 0;
+  const filteredMarketplaceItems = marketplaceItems.filter((item) => permisosUsuario.includes(item.permiso));
+  const filteredSellerItems = sellerItems.filter((item) => permisosUsuario.includes(item.permiso));
+  const showEcommerceAdmin = filteredEcommerceAdminItems.length > 0;
 
   return (
     <Sidebar collapsible="icon" variant="floating">
@@ -93,12 +92,28 @@ export async function AppSidebar() {
               ))}
 
 
+              {filteredMarketplaceItems.map((item) => (
+                <SidebarMenuItem key={item.url}>
+                  <SidebarMenuButton asChild>
+                    <Link href={item.url}><item.icon size={16} className="p-0" /><span>{item.title}</span></Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+
+              {filteredSellerItems.map((item) => (
+                <SidebarMenuItem key={item.url}>
+                  <SidebarMenuButton asChild>
+                    <Link href={item.url}><item.icon size={16} className="p-0" /><span>{item.title}</span></Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+
               {showEcommerceAdmin && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link href="/dashboard">
-                      <LayersIcon size={16} className="p-0" />
-                      <span>Backoffice Ecommerce</span>
+                      <ShieldCheck size={16} className="p-0" />
+                      <span>Moderación</span>
                     </Link>
                   </SidebarMenuButton>
                   <SidebarMenuSub>
@@ -113,25 +128,6 @@ export async function AppSidebar() {
                 </SidebarMenuItem>
               )}
 
-              {usuario && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href="/productos">
-                      <LayersIcon size={16} className="p-0" />
-                      <span>Experiencia de compra</span>
-                    </Link>
-                  </SidebarMenuButton>
-                  <SidebarMenuSub>
-                    {tiendaItems.map((item) => (
-                      <SidebarMenuSubItem key={item.url}>
-                        <SidebarMenuSubButton asChild>
-                          <Link href={item.url}>{item.title}</Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                </SidebarMenuItem>
-              )}
 
               {showMantenimiento && (
                 <Collapsible className="group/collapsible">

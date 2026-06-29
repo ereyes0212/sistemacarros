@@ -40,9 +40,11 @@ export async function registerWithEmailAction(formData: FormData) {
     const existingUser = await prisma.usuario.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) return true;
 
-    const clientRole = await prisma.rol.findUnique({ where: { nombre: "CLIENTE" } });
+    const requestedRole = String(formData.get("role") || "Comprador");
+    const roleName = requestedRole === "Vendedor" ? "Vendedor" : "Comprador";
+    const clientRole = await prisma.rol.findUnique({ where: { nombre: roleName } });
     if (!clientRole) {
-        console.error("No existe el rol CLIENTE para auto-registro.");
+        console.error(`No existe el rol ${roleName} para auto-registro.`);
         return false;
     }
 
