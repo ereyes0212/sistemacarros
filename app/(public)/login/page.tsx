@@ -44,7 +44,7 @@ export default async function LoginPage({
         <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-[0_20px_80px_-35px_rgba(15,23,42,0.45)] dark:border-slate-800">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.55),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(99,102,241,0.45),transparent_24%),linear-gradient(135deg,#020617_0%,#0f172a_48%,#155e75_100%)]" />
           <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl" />
-          <div className="absolute left-12 top-24 h-28 w-64 rotate-[-12deg] rounded-full border border-white/15 bg-white/10 backdrop-blur-sm" />
+          <div className="absolute left-12 top-24 h-28 w-64 -rotate-12 rounded-full border border-white/15 bg-white/10 backdrop-blur-sm" />
 
           <div className="relative flex h-full flex-col justify-between p-8 text-white lg:p-10">
             <div className="space-y-4">
@@ -73,7 +73,7 @@ export default async function LoginPage({
 
         <section className="flex items-center justify-center">
           <Card className="w-full max-w-lg overflow-hidden rounded-3xl border-slate-200 bg-white/95 shadow-[0_20px_80px_-45px_rgba(15,23,42,0.7)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90">
-            <div className="h-1.5 w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500" />
+            <div className="h-1.5 w-full bg-linear-to-r from-cyan-400 via-blue-500 to-violet-500" />
 
             <CardHeader className="space-y-4 pb-2">
               <div className="space-y-2">

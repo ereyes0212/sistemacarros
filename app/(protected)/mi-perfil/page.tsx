@@ -2,8 +2,9 @@ import { getSession } from "@/auth";
 import NoAcceso from "@/components/noAccess";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getMiPerfil } from "@/services/cliente-service";
+
 import { PerfilContactoForm } from "./components/perfil-contacto-form";
+import { getMiPerfil } from "@/app/services/cliente-service";
 
 export default async function MiPerfilPage() {
   const session = await getSession();

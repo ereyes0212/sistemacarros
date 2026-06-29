@@ -1,63 +1,163 @@
 import { getSession } from "@/auth";
-import { NavUser } from "@/components/nav-user";
-import { ModeToggle } from "@/components/buton-theme";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { BarChart3, Car, LayersIcon, MessageSquare, ShieldCheck, UserIcon, type LucideIcon } from "lucide-react";
+import {
+  ChevronDown, ChevronUp, LayersIcon, Settings, UserIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { NavUser } from "./nav-user";
+import { ModeToggle } from "./buton-theme";
 
-type SidebarModule = {
-  title: string;
-  url: string;
-  icon: LucideIcon;
-  permiso?: string;
-  permisos?: string[];
-};
-
-const modules: SidebarModule[] = [
-  { title: "Dashboard", url: "/dashboard", icon: BarChart3, permisos: ["ver_dashboard", "ver_vehiculos_admin"] },
-  { title: "Vehículos", url: "/productos-admin", icon: Car, permisos: ["ver_productos_admin", "ver_vehiculos_admin"] },
-  { title: "Categorías", url: "/categorias", icon: LayersIcon, permisos: ["ver_categorias_admin", "ver_vehiculos_admin"] },
-  { title: "Leads", url: "/reportes", icon: MessageSquare, permisos: ["ver_reportes", "ver_vehiculos_admin"] },
-  { title: "Comentarios", url: "/comentarios", icon: ShieldCheck, permisos: ["ver_comentarios", "ver_vehiculos_admin"] },
-  { title: "Usuarios", url: "/usuarios", icon: UserIcon, permiso: "ver_usuarios" },
+const mantenimientoItems = [
   { title: "Roles", url: "/roles", icon: LayersIcon, permiso: "ver_roles" },
+  { title: "Permisos", url: "/permisos", icon: LayersIcon, permiso: "ver_permisos" },
+  { title: "Usuarios", url: "/usuarios", icon: UserIcon, permiso: "ver_usuarios" },
+];
+
+const items = [
+  { title: "Mi Perfil", url: "/mi-perfil", icon: UserIcon, permiso: "ver_mi_perfil" },
+];
+
+
+const tiendaItems = [
+  { title: "Ver tienda", url: "/" },
+  { title: "Productos tienda", url: "/productos" },
+  { title: "Carrito", url: "/carrito" },
+  { title: "Checkout", url: "/checkout" },
+  { title: "Mis pedidos", url: "/perfil" },
+];
+
+const ecommerceAdminItems = [
+  { title: "Dashboard", url: "/dashboard", permiso: "ver_dashboard" },
+  { title: "Productos", url: "/productos-admin", permiso: "ver_productos_admin" },
+  { title: "Categorías", url: "/categorias", permiso: "ver_categorias_admin" },
+  { title: "Pedidos", url: "/pedidos", permiso: "ver_pedidos_admin" },
+  { title: "Usuarios", url: "/usuarios", permiso: "ver_usuarios" },
+  { title: "Cupones", url: "/cupones", permiso: "ver_cupones_admin" },
+  { title: "Métodos de envío", url: "/metodos-envio", permiso: "ver_metodos_envio_admin" },
+  { title: "Reportes", url: "/reportes", permiso: "ver_reportes_admin" },
+  { title: "Proveedores", url: "/proveedores", permiso: "ver_proveedores_admin" },
+  { title: "Comentarios", url: "/comentarios", permiso: "ver_comentarios" },
 ];
 
 export async function AppSidebar() {
   const usuario = await getSession();
   const permisosUsuario = usuario?.Permiso || [];
 
-  const filteredModules = modules.filter((item) => item.permisos?.some((permiso) => permisosUsuario.includes(permiso)) ?? (item.permiso ? permisosUsuario.includes(item.permiso) : false));
+
+  const filteredItems = items.filter((item) => {
+    if (!permisosUsuario.includes(item.permiso)) return false;
+    return true;
+  });
+  const filteredMantenimientoItems = mantenimientoItems.filter((item) => permisosUsuario.includes(item.permiso));
+  const showMantenimiento = filteredMantenimientoItems.length > 0;
+  const filteredEcommerceAdminItems = ecommerceAdminItems.filter((item) => permisosUsuario.includes(item.permiso));
+  const showEcommerceAdmin = usuario?.Rol === "ADMIN" && filteredEcommerceAdminItems.length > 0;
 
   return (
     <Sidebar collapsible="icon" variant="floating">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="mb-2 flex items-center justify-between text-sidebar-foreground">
-            <span className="font-semibold tracking-tight">Panel CRM</span>
-            <ModeToggle />
+          <SidebarGroupLabel className="flex justify-between items-center">
+            <ModeToggle></ModeToggle>
           </SidebarGroupLabel>
 
           <SidebarGroupContent>
+
+
             <SidebarMenu>
-              {filteredModules.map((item) => (
+              {filteredItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton ref={item.url}>
-                    <item.icon size={16} />
-                    <span>{item.title}</span>
+                  <SidebarMenuButton asChild>
+                    <Link href={item.url}>
+                      <item.icon size={16} className="p-0" />
+                      <span>{item.title}</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+
+              {showEcommerceAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/dashboard">
+                      <LayersIcon size={16} className="p-0" />
+                      <span>Backoffice Ecommerce</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  <SidebarMenuSub>
+                    {filteredEcommerceAdminItems.map((item) => (
+                      <SidebarMenuSubItem key={item.url}>
+                        <SidebarMenuSubButton asChild>
+                          <Link href={item.url}>{item.title}</Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </SidebarMenuItem>
+              )}
+
+              {usuario && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/productos">
+                      <LayersIcon size={16} className="p-0" />
+                      <span>Experiencia de compra</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  <SidebarMenuSub>
+                    {tiendaItems.map((item) => (
+                      <SidebarMenuSubItem key={item.url}>
+                        <SidebarMenuSubButton asChild>
+                          <Link href={item.url}>{item.title}</Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </SidebarMenuItem>
+              )}
+
+              {showMantenimiento && (
+                <Collapsible className="group/collapsible">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton>
+                        <Settings size={16} className="p-0" />
+                        <span>Mantenimiento</span>
+                        <ChevronDown className="ml-auto group-data-[state=open]/collapsible:hidden" />
+                        <ChevronUp className="ml-auto group-data-[state=closed]/collapsible:hidden" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {filteredMantenimientoItems.map((item) => (
+                          <SidebarMenuSubItem key={item.title}>
+                            <SidebarMenuSubButton asChild>
+                              <Link href={item.url}>{item.title}</Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
