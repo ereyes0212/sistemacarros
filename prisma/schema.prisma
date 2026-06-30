@@ -101,6 +101,7 @@ model Usuario {
   telefono            String?              @db.VarChar(30)
   ciudad              String?              @db.VarChar(100)
   DebeCambiarPassword Boolean?
+  onboardingCompleted Boolean              @default(false)
   email               String               @unique
   createAt            DateTime             @default(now())
   updateAt            DateTime             @updatedAt

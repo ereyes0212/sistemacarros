@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { PerfilContactoForm } from "./components/perfil-contacto-form";
+import { BecomeSellerButton } from "./components/become-seller-button";
 import { getMiPerfil } from "@/app/services/cliente-service";
 
 export default async function MiPerfilPage() {
@@ -49,6 +50,8 @@ export default async function MiPerfilPage() {
             </Card>
           </div>
 
+          {!user.onboardingCompleted && <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4"><p className="font-semibold text-blue-900">Completa tu onboarding</p><p className="text-sm text-blue-800">Esto solo se solicita una vez: confirma tus datos y tu rol para mejorar tu experiencia.</p></div>}
+          {user.rol.nombre === "Comprador" && <div className="rounded-2xl border p-4"><p className="font-semibold">¿Quieres vender carros?</p><p className="mb-3 text-sm text-muted-foreground">Puedes pasar tu perfil a vendedor. Después de cambiarte no podrás volver a comprador.</p><BecomeSellerButton /></div>}
           <PerfilContactoForm direccion={user.direccion} ciudad={user.ciudad} telefono={user.telefono} />
         </CardContent>
       </Card>
