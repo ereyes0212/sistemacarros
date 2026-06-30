@@ -31,6 +31,7 @@ export async function updateMiPerfil(
       direccion: direccion || null,
       ciudad: ciudad || null,
       telefono: telefono || null,
+      onboardingCompleted: true,
     },
   });
 
@@ -90,17 +91,20 @@ export async function changeMiPerfilPassword(
   const token = await encrypt({
     IdUser: updated.id,
     Usuario: updated.usuario,
+    Email: updated.email,
     Rol: updated.rol.nombre,
     Nombre: updated.nombre,
     FotoUrl: updated.fotoUrl,
     IdRol: updated.rol_id,
     Permiso: permisos,
     DebeCambiar: updated.DebeCambiarPassword ?? false,
+    OnboardingCompleted: updated.onboardingCompleted,
     iss: "your-issuer",
     aud: "your-audience",
   });
 
-  cookies().set("session", token, {
+  const cookieStore = await cookies();
+  cookieStore.set("session", token, {
     expires: new Date(Date.now() + 6 * 60 * 60 * 1000),
     httpOnly: true,
     path: "/",
@@ -111,4 +115,19 @@ export async function changeMiPerfilPassword(
   revalidatePath("/mi-perfil");
 
   return { ok: true, message: "Contraseña actualizada correctamente." };
+}
+
+export async function becomeSeller() {
+  const session = await getSession();
+  if (!session?.IdUser) return { ok: false, message: "No autenticado." };
+  const sellerRole = await prisma.rol.findUnique({ where: { nombre: "Vendedor" }, include: { permisos: { include: { permiso: true } } } });
+  if (!sellerRole) return { ok: false, message: "No existe el rol Vendedor." };
+  const current = await prisma.usuario.findUnique({ where: { id: session.IdUser }, include: { rol: true } });
+  if (!current || current.rol.nombre !== "Comprador") return { ok: false, message: "Este cambio solo aplica a compradores." };
+  const updated = await prisma.usuario.update({ where: { id: session.IdUser }, data: { rol_id: sellerRole.id, onboardingCompleted: true }, include: { rol: { include: { permisos: { include: { permiso: true } } } } } });
+  const token = await encrypt({ IdUser: updated.id, Usuario: updated.usuario, Email: updated.email, Rol: updated.rol.nombre, Nombre: updated.nombre, FotoUrl: updated.fotoUrl, IdRol: updated.rol_id, Permiso: updated.rol.permisos.filter((rp) => rp.permiso.activo).map((rp) => rp.permiso.nombre), DebeCambiar: updated.DebeCambiarPassword ?? false, OnboardingCompleted: true });
+  const cookieStore = await cookies();
+  cookieStore.set("session", token, { expires: new Date(Date.now() + 6 * 60 * 60 * 1000), httpOnly: true, path: "/", sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+  revalidatePath("/mi-perfil");
+  return { ok: true, message: "Ahora eres vendedor. Este cambio no se puede revertir a comprador." };
 }

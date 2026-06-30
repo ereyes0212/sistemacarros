@@ -27,6 +27,7 @@ const mantenimientoItems = [
   { title: "Roles", url: "/roles", icon: LayersIcon, permiso: "ver_roles" },
   { title: "Permisos", url: "/permisos", icon: LayersIcon, permiso: "ver_permisos" },
   { title: "Usuarios", url: "/usuarios", icon: UserIcon, permiso: "ver_usuarios" },
+  { title: "Marcas y modelos", url: "/marcas-modelos", icon: Car, permiso: "moderar_carros" },
 ];
 
 const items = [

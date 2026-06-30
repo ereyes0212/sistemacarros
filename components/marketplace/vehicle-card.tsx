@@ -1,14 +1,15 @@
 import Image from "next/image";
-import { Gauge, MapPin, Fuel, Heart } from "lucide-react";
+import { Gauge, MapPin, Fuel } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import type { Vehicle } from "@/lib/marketplace/vehicles";
 import { VehicleStatusBadge } from "./vehicle-status-badge";
+import { FavoriteButton } from "./favorite-button";
 
 const currency = new Intl.NumberFormat("es-US", {
   style: "currency",
-  currency: "USD",
+  currency: "HNL",
   maximumFractionDigits: 0,
 });
 
@@ -26,10 +27,7 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
         <div className="absolute left-4 top-4">
           <VehicleStatusBadge status={vehicle.status} />
         </div>
-        <Button className="absolute right-4 top-4 rounded-full bg-white/90 text-zinc-900 hover:bg-white" size="icon" variant="ghost">
-          <Heart />
-          <span className="sr-only">Guardar en favoritos</span>
-        </Button>
+        <FavoriteButton vehicleId={vehicle.id} />
       </div>
       <CardContent className="space-y-4 pt-1">
         <div>
