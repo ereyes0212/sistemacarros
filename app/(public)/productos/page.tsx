@@ -49,7 +49,7 @@ export default async function ProductosPage({ searchParams }: { searchParams: Re
   const orderBy: Prisma.VehicleOrderByWithRelationInput =
     sort === "precio-asc" ? { price: "asc" } : sort === "precio-desc" ? { price: "desc" } : sort === "anio" ? { year: "desc" } : { createdAt: "desc" };
 
-  const { categories, brands, vehicles, totalCount } = await getVehiculosCatalogo(where, orderBy, page, pageSize);
+  const { categories, brands, vehicles, totalCount, suggestions } = await getVehiculosCatalogo(where, orderBy, page, pageSize);
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
@@ -94,7 +94,10 @@ export default async function ProductosPage({ searchParams }: { searchParams: Re
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border py-16 text-center"><p className="font-semibold">No se encontraron carros</p><p className="text-sm text-muted-foreground">Prueba con otros filtros o vuelve a ver todo el inventario.</p></div>
+        <div className="space-y-8">
+          <div className="rounded-xl border bg-white/80 py-16 text-center shadow-sm"><p className="font-semibold">No hay resultados para tu búsqueda</p><p className="text-sm text-muted-foreground">Prueba con otros filtros o revisa estas opciones que te pueden interesar.</p></div>
+          {suggestions.length > 0 && <section className="space-y-4"><div><p className="font-semibold text-blue-700">Te puede interesar</p><h2 className="text-2xl font-bold tracking-tight">Otras opciones disponibles</h2></div><div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">{suggestions.map((vehicle) => <Link key={vehicle.id} href={`/productos/${vehicle.slug}`} className="block"><VehicleCard vehicle={{ id: vehicle.id, title: vehicle.title, brand: vehicle.brand.name, model: vehicle.model?.name ?? "", year: vehicle.year, mileage: vehicle.mileage, fuelType: vehicle.fuelType, transmission: vehicle.transmission, price: Number(vehicle.price), city: vehicle.city, country: vehicle.country, image: vehicle.images[0]?.url ?? fallbackImage, status: vehicle.status, seller: vehicle.seller.nombre ?? vehicle.seller.usuario }} /></Link>)}</div></section>}
+        </div>
       )}
 
       {totalPages > 1 && <div className="mt-8 flex justify-center gap-3"><Button asChild variant="outline" disabled={page <= 1}><Link href={buildHref(searchParams, page - 1)}>Anterior</Link></Button><Button asChild variant="outline" disabled={page >= totalPages}><Link href={buildHref(searchParams, page + 1)}>Siguiente</Link></Button></div>}

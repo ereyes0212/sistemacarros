@@ -48,12 +48,12 @@ export async function toggleFavorite(vehicleId: string) {
     await prisma.vehicleWishlistItem.delete({ where: { id: existing.id } });
     revalidatePath("/favoritos");
     revalidatePath(`/productos/${vehicle.slug}`);
-    return { ok: true, message: "Carro eliminado de favoritos." };
+    return { ok: true, favorited: false, message: "Carro eliminado de favoritos." };
   }
   await prisma.vehicleWishlistItem.create({ data: { wishlistId: wishlist.id, vehicleId } });
   revalidatePath("/favoritos");
   revalidatePath(`/productos/${vehicle.slug}`);
-  return { ok: true, message: "Carro agregado a favoritos." };
+  return { ok: true, favorited: true, message: "Carro agregado a favoritos." };
 }
 
 export async function createVehicleComment(vehicleId: string, formData: FormData) {
