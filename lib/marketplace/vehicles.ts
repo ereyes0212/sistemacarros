@@ -13,6 +13,7 @@ export type Vehicle = {
   image: string;
   status: "AVAILABLE" | "RESERVED" | "SOLD";
   seller: string;
+  isFavorite?: boolean;
 };
 
 export const featuredVehicles: Vehicle[] = [

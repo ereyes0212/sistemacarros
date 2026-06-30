@@ -9,7 +9,8 @@ export async function getVehicleMetadata(slug: string) {
 }
 
 export async function getVehicleDetail(slug: string) {
-  return prisma.vehicle.findFirst({
+  const session = await getSession();
+  const vehicle = await prisma.vehicle.findFirst({
     where: { slug, listingStatus: "APPROVED" },
     include: {
       brand: true,
@@ -21,6 +22,11 @@ export async function getVehicleDetail(slug: string) {
       comments: { where: { status: "APPROVED" }, include: { user: { select: { nombre: true, usuario: true } } }, orderBy: { createdAt: "desc" } },
     },
   });
+  if (!vehicle) return null;
+  const favorite = session?.IdUser
+    ? await prisma.vehicleWishlistItem.findFirst({ where: { vehicleId: vehicle.id, wishlist: { userId: session.IdUser } }, select: { id: true } })
+    : null;
+  return { ...vehicle, isFavorite: Boolean(favorite) };
 }
 
 export async function createVehicleLead(vehicleId: string, formData: FormData) {

@@ -1,6 +1,7 @@
 "use server";
 
 import type { Prisma } from "@/lib/generated/prisma";
+import { getSession } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function getVehiculosCatalogo(
@@ -17,7 +18,9 @@ export async function getVehiculosCatalogo(
     seller: { select: { nombre: true, usuario: true } },
   };
 
-  const [categories, brands, vehicles, totalCount, suggestions] = await Promise.all([
+  const session = await getSession();
+
+  const [categories, brands, vehicles, totalCount, suggestions, wishlist] = await Promise.all([
     prisma.vehicleCategory.findMany({ select: { slug: true, name: true, _count: { select: { vehicles: true } } }, orderBy: { name: "asc" } }),
     prisma.vehicleBrand.findMany({ select: { slug: true, name: true, _count: { select: { vehicles: true } } }, orderBy: { name: "asc" } }),
     prisma.vehicle.findMany({
@@ -34,7 +37,10 @@ export async function getVehiculosCatalogo(
       include: vehicleInclude,
       take: 4,
     }),
+    session?.IdUser
+      ? prisma.vehicleWishlist.findUnique({ where: { userId: session.IdUser }, include: { items: { select: { vehicleId: true } } } })
+      : Promise.resolve(null),
   ]);
 
-  return { categories, brands, vehicles, totalCount, suggestions };
+  return { categories, brands, vehicles, totalCount, suggestions, favoriteVehicleIds: wishlist?.items.map((item) => item.vehicleId) ?? [] };
 }

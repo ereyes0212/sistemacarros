@@ -27,7 +27,7 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
         <div className="absolute left-4 top-4">
           <VehicleStatusBadge status={vehicle.status} />
         </div>
-        <FavoriteButton vehicleId={vehicle.id} />
+        <FavoriteButton vehicleId={vehicle.id} initialIsFavorite={vehicle.isFavorite} />
       </div>
       <CardContent className="space-y-4 pt-1">
         <div>

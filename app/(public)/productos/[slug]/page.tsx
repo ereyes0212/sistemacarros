@@ -32,7 +32,7 @@ export default async function VehicleDetailPage({ params }: { params: Promise<{ 
         <div className="space-y-4">
           <div className="relative h-[420px] overflow-hidden rounded-2xl border bg-muted">
             <Image src={mainImage} alt={vehicle.title} fill className="object-cover" priority sizes="(min-width: 1024px) 60vw, 100vw" />
-            <FavoriteButton vehicleId={vehicle.id} />
+            <FavoriteButton vehicleId={vehicle.id} initialIsFavorite={vehicle.isFavorite} />
           </div>
           <div className="grid grid-cols-3 gap-3">
             {vehicle.images.slice(1, 4).map((image) => <div key={image.id} className="relative h-28 overflow-hidden rounded-xl border"><Image src={image.url} alt={image.alt ?? vehicle.title} fill className="object-cover" /></div>)}
