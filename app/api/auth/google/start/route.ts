@@ -14,14 +14,14 @@ export async function GET(request: Request) {
     path: "/",
     sameSite: "lax",
     maxAge: 600,
-    secure: process.env.NODE_ENV === "production",
+    // secure: process.env.NODE_ENV === "production",
   });
   response.cookies.set("google_oauth_state", state, {
     httpOnly: true,
     path: "/",
     sameSite: "lax",
     maxAge: 600,
-    secure: process.env.NODE_ENV === "production",
+    // secure: process.env.NODE_ENV === "production",
   });
 
   return response;
