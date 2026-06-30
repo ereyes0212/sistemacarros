@@ -28,6 +28,7 @@ export interface UsuarioSesion extends JWTPayload {
   IdRol: string;
   Permiso: string[];
   DebeCambiar: boolean;
+  OnboardingCompleted: boolean;
 }
 
 export interface LoginResult {
@@ -72,6 +73,7 @@ export async function decrypt(token: string): Promise<UsuarioSesion | null> {
       IdRol: String(payload.IdRol),
       Permiso: Array.isArray(payload.Permiso) ? payload.Permiso.map(String) : [],
       DebeCambiar: payload.DebeCambiar === true,
+      OnboardingCompleted: payload.OnboardingCompleted === true,
       iss: payload.iss,
       aud: payload.aud,
       exp: payload.exp,
@@ -141,6 +143,7 @@ function buildPayload(user: UsuarioConRol): UsuarioSesion {
     IdRol: user.rol_id,
     Permiso: user.rol.permisos.filter((rp) => rp.permiso.activo).map((rp) => rp.permiso.nombre),
     DebeCambiar: user.DebeCambiarPassword ?? false,
+    OnboardingCompleted: user.onboardingCompleted,
   };
 }
 

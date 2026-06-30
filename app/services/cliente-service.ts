@@ -12,6 +12,7 @@ export async function getMiPerfil(usuarioId: string) {
       direccion: true,
       ciudad: true,
       telefono: true,
+      onboardingCompleted: true,
       rol: { select: { nombre: true } },
     },
   });
