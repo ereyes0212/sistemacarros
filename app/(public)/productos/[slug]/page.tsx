@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createVehicleLead, getVehicleDetail, getVehicleMetadata } from "./actions";
+import { CommentForm } from "@/components/marketplace/comment-form";
+import { FavoriteButton } from "@/components/marketplace/favorite-button";
 
-const currency = new Intl.NumberFormat("es-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const currency = new Intl.NumberFormat("es-US", { style: "currency", currency: "HNL", maximumFractionDigits: 0 });
 const fallbackImage = "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -30,6 +32,7 @@ export default async function VehicleDetailPage({ params }: { params: Promise<{ 
         <div className="space-y-4">
           <div className="relative h-[420px] overflow-hidden rounded-2xl border bg-muted">
             <Image src={mainImage} alt={vehicle.title} fill className="object-cover" priority sizes="(min-width: 1024px) 60vw, 100vw" />
+            <FavoriteButton vehicleId={vehicle.id} initialIsFavorite={vehicle.isFavorite} />
           </div>
           <div className="grid grid-cols-3 gap-3">
             {vehicle.images.slice(1, 4).map((image) => <div key={image.id} className="relative h-28 overflow-hidden rounded-xl border"><Image src={image.url} alt={image.alt ?? vehicle.title} fill className="object-cover" /></div>)}
@@ -75,6 +78,16 @@ export default async function VehicleDetailPage({ params }: { params: Promise<{ 
       <Card className="mt-8">
         <CardHeader><CardTitle>Descripción</CardTitle></CardHeader>
         <CardContent className="whitespace-pre-line text-muted-foreground">{vehicle.description}</CardContent>
+      </Card>
+
+      <Card className="mt-8">
+        <CardHeader><CardTitle>Comentarios</CardTitle></CardHeader>
+        <CardContent className="space-y-5">
+          <CommentForm vehicleId={vehicle.id} />
+          <div className="space-y-3">
+            {vehicle.comments.length ? vehicle.comments.map((comment) => <div key={comment.id} className="rounded-xl border bg-muted/30 p-4"><p className="font-medium">{comment.user.nombre ?? comment.user.usuario}</p><p className="mt-1 text-sm text-muted-foreground">{comment.content}</p></div>) : <p className="text-sm text-muted-foreground">Sé la primera persona en comentar este vehículo.</p>}
+          </div>
+        </CardContent>
       </Card>
     </div>
   );
